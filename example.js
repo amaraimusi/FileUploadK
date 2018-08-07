@@ -9,9 +9,10 @@ $(() => {
 		'ajax_url':'upload.php',
 		'prog_slt':'#prog1',
 		'err_slt':'#err',
+		'valid_ext':'image',
 		});
 	fileUploadK.addEvent('file1');
-	fileUploadK.addEvent('file2');
+	fileUploadK.addEvent('file2',{'valid_ext':'audio'});
 	
 });
 

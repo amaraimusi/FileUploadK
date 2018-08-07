@@ -32,3 +32,7 @@
 	border-top:solid 1px #858585;
 	display:none;
 }
+
+.fuk .fuk_file_unit .fuk_err_msg{
+	color:red;
+}
