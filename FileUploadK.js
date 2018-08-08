@@ -11,7 +11,7 @@
  * 進捗バーの表示
  * 
  * @license MIT
- * @version 1.0
+ * @version 1.0.1
  * @date 2018-7-6 | 2018-8-7
  * @history 
  *  - 2018-7-6 新規作成
@@ -66,9 +66,7 @@ class FileUploadK{
 			throw new Error("Please set 'ajax_url' in 'param");
 		}
 		
-		if(param['ajax_url'] == null){
-			throw new Error("Please set 'ajax_url' in 'param");
-		}
+		if(param['ajax_url'] == null) param['ajax_url'] = null;
 		
 		if(param['style_flg'] == null) param['style_flg'] = 1;
 		
@@ -449,10 +447,13 @@ class FileUploadK{
 			p_unit_html = "<div class='fuk_file_unit' >" + p_unit_html + '</div>';
 			return p_unit_html;
 		}
-
+		
+		var label_width = this.box[fue_id]['label_width'];
+		var label_height = this.box[fue_id]['label_height'];
+		
 		// 画像要素と音楽要素の作成
 		if(fEnt.file_type == 'image'){
-			p_unit_html += "<img src='' class='fuk_rp' style='width:240px;height:160px;' />";
+			p_unit_html += "<img src='' class='fuk_rp' style='width:" + label_width + "px;height:" + label_height + "px;' />";
 		}else if(fEnt.file_type == 'audio'){
 			p_unit_html += "<audio src='' class='fuk_rp' controls />";
 		}

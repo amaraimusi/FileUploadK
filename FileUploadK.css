@@ -1,4 +1,7 @@
-
+.fuk_label{
+	display:'inline-block';
+	background-color:#d0dfef;
+}
 
 .fuk .fuk_first_msg {
 	font-size:1em;
