@@ -11,7 +11,7 @@
  * 進捗バーの表示
  * 
  * @license MIT
- * @version 1.1
+ * @version 1.1.1
  * @date 2018-7-6 | 2018-8-11
  * @history 
  *  - 2018-7-6 新規作成
