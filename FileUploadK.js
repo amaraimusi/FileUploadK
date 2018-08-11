@@ -11,11 +11,12 @@
  * 進捗バーの表示
  * 
  * @license MIT
- * @version 1.0.1
- * @date 2018-7-6 | 2018-8-7
+ * @version 1.1
+ * @date 2018-7-6 | 2018-8-11
  * @history 
  *  - 2018-7-6 新規作成
  *  - 2018-8-7 リリース
+ *  - 2018-8-11 ver 1.1
  * 
  */
 class FileUploadK{
@@ -31,6 +32,8 @@ class FileUploadK{
 	 * - prog_slt 進捗バー要素のセレクタ
 	 * - err_slt  エラー要素のセレクタ
 	 * - first_msg_text 初期メッセージテキスト
+	 * - img_width プレビュー画像サイスX　（画像ファイルのみ影響）
+	 * - img_height プレビュー画像サイスY
 	 * - adf    補足データフラグリスト (Ancillary Data Flgs)
 	 *     - fn_flg ファイル名・表示フラグ (デフォ:1 以下同じ)
 	 *     - size_flg 容量・表示フラグ
@@ -53,6 +56,8 @@ class FileUploadK{
 		this.param = this._setParamIfEmpty(param);
 		
 		this.unit = jQuery(param.unit_slt);
+		
+		this.pacbData; // プレビュー後コールバック情報　
 		
 	}
 
@@ -77,6 +82,9 @@ class FileUploadK{
 		if(param['first_msg_text'] == null) param['first_msg_text'] = '';
 		
 		if(param['valid_mime_flg'] == null) param['valid_mime_flg'] = 0;
+		
+		if(param['img_width'] == null) param['img_width'] = null;
+		if(param['img_height'] == null) param['img_height'] = null;
 		
 		// 補足データフラグリスト
 		if(param['adf'] == null){
@@ -108,8 +116,13 @@ class FileUploadK{
 	 * @param fue_id ファイルアップロード要素のid属性
 	 * @param option 
 	 *  - valid_ext バリデーション拡張子(詳細はconstructor()の引数を参照）
+	 *  - pacb プレビュー後コールバック関数
+	 *  - img_width プレビュー画像サイスX　（画像ファイルのみ影響）
+	 *  - img_height プレビュー画像サイスY
 	 */
 	addEvent(fue_id,option){
+		
+		if(option == null) option = {};
 		
 		// ファイルアップロード要素の親ラベル（DnD要素）を取得する
 		var parLabel = this._getElement(fue_id,'label');
@@ -134,7 +147,7 @@ class FileUploadK{
 			// ボックスデータにアップロードファイル情報を追加
 			var files = evt.dataTransfer.files; 
 			this.box[fue_id]['files'] = files;
-			this._preview(fue_id); // プレビュー表示
+			this._preview(fue_id,option); // プレビュー表示
 			
 		},false);
 		// ドラッグオーバーイベントを発動させないようにする。
@@ -150,7 +163,7 @@ class FileUploadK{
 			var files = e.target.files; // ファイルオブジェクト配列を取得（配列要素数は選択したファイル数を表す）
 			if(files == null || files.length == 0) return;// ファイル件数が0件なら処理抜け
 			this.box[fue_id]['files'] = files;
-			this._preview(fue_id); // プレビュー表示
+			this._preview(fue_id,option); // プレビュー表示
 			
 		});
 		
@@ -204,9 +217,10 @@ class FileUploadK{
 	
 	/**
 	 * プレビュー表示
-	 * @param fue_id ファイルアップロード要素のid属性
+	 * @param string fue_id ファイルアップロード要素のid属性
+	 * @param object option オプション（addEventメソッドの引数と同じ）
 	 */
-	_preview(fue_id){
+	_preview(fue_id,option){
 
 		var files = this.box[fue_id]['files'];
 		
@@ -235,12 +249,15 @@ class FileUploadK{
 		// ファイルユニットHTMLを作成して、プレビューHTMLに連結する。
 		for(var i in fileData){
 			var fEnt = fileData[i];
-			preview_html += this._makeFileUnitHtml(fue_id,fEnt); 
+			preview_html += this._makeFileUnitHtml(fue_id,fEnt,option); 
 		}
 		
 		// プレビュー区分要素にプレビューHTMLをセットする。
 		var prvElm = this._getElement(fue_id,'preview');
 		if(prvElm[0]) prvElm.html(preview_html);
+		
+		
+		this._pacbAction('reset',option); // プレビュー後コールバックアクション：カウントリセット
 		
 		// リソースプレビュー要素を取得する。リソースプレビュー要素はプレビュー区分要素内に複数存在するDIV要素群のこと。
 		var rpElms = {}; // リソースプレビュー要素リスト
@@ -249,6 +266,7 @@ class FileUploadK{
 			var rpElm = elm.find('.fuk_rp');
 			if(rpElm[0]){
 				rpElms[i] = rpElm;
+				this._pacbAction('count'); // プレビュー後コールバックアクション：カウント処理
 			}else{
 				rpElms[i] = null;
 			}
@@ -263,10 +281,13 @@ class FileUploadK{
 			if(fEnt.err_flg == true) continue;
 			if(file.size == null) continue;
 			
+			
 			// リソース（ファイル）のレンダリングを行い、リソースプレビュー要素に画像などを表示する。
 			this._setupRender(file,rpElms,i);
 
 		}
+		
+		this._pacbAction('exe2'); // プレビュー後コールバックアクション：制御と実行2
 		
 	}
 	
@@ -286,7 +307,8 @@ class FileUploadK{
 
 			var rpElm = rpElms[i];
 			rpElm.attr('src',reader.result);
-
+			
+			this._pacbAction('exe1'); // プレビュー後コールバックアクション：制御と実行1
 		}
 	}
 	
@@ -435,9 +457,10 @@ class FileUploadK{
 	 * ファイルユニットHTML
 	 * @param int fue_if FU要素ID
 	 * @param array fEnt ファイルエンティティ
+	 * @param object option オプション（addEventメソッドの引数と同じ）
 	 * @return string プレビューユニットHTML
 	 */
-	_makeFileUnitHtml(fue_id,fEnt){
+	_makeFileUnitHtml(fue_id,fEnt,option){
 
 		var p_unit_html = ""; // プレビューユニットHTML
 		
@@ -448,8 +471,10 @@ class FileUploadK{
 			return p_unit_html;
 		}
 		
-		var label_width = this.box[fue_id]['label_width'];
-		var label_height = this.box[fue_id]['label_height'];
+		// プレビュー画像サイズを取得
+		var imgSize = this._getImgSize(fue_id,option);
+		var label_width = imgSize.width;
+		var label_height = imgSize.height;
 		
 		// 画像要素と音楽要素の作成
 		if(fEnt.file_type == 'image'){
@@ -480,6 +505,40 @@ class FileUploadK{
 		p_unit_html = "<div class='fuk_file_unit' >" + p_unit_html + '</div>';
 
 		return p_unit_html;
+		
+	}
+	
+	/**
+	 * プレビュー画像サイズを取得
+	 * @return プレビュー画像サイズ
+	 */
+	_getImgSize(fue_id,option){
+		
+		var width = 0;
+		var height = 0;
+		
+		if(option['img_width']){
+			width = option['img_width'];
+		}else if(this.param['img_width']){
+			width = this.param['img_width'];
+		}else if(this.box[fue_id]['label_width']){
+			width = this.box[fue_id]['label_width'];
+		}else{
+			width = 160;
+		}
+		
+		if(option['img_height']){
+			height = option['img_height'];
+		}else if(this.param['img_height']){
+			height = this.param['img_height'];
+		}else if(this.box[fue_id]['label_height']){
+			height = this.box[fue_id]['label_height'];
+		}else{
+			height = 160;
+		}
+		
+		var imgSize ={'width':width,'height':height};
+		return imgSize;
 		
 	}
 	
@@ -519,6 +578,63 @@ class FileUploadK{
 		parLabel.height(label_height);
 		
 	}
+	
+	/**
+	 * プレビュー後コールバックアクション
+	 * @note
+	 * プレビュー後にコールバック関数を実行する。
+	 * しかし、「プレビュー後」のタイミングは複数の非同期処理が関わってくるため非常に複雑である。
+	 * 当関数でなるべくシンプルな処理になるようにしている。
+	 * 
+	 * @param string action アクションコード
+	 *  - reset コールバックに関する情報を初期化する。
+	 *  - count 非同期処理の実行回数をカウントする。
+	 *  - exe1 非同期処理がすべて終了したらコールバック関数を実行する。
+	 *  - exe2 非同期処理が0件であるならコールバック関数を実行する。
+	 */
+	_pacbAction(action,option){
+
+		switch (action) {
+		case 'reset':
+
+			var pacb = null;
+			if(option && option['pacb']) pacb = option['pacb'];
+
+			this.pacbData = {
+				'index':0,
+				'count':0,
+				'callback':pacb,
+			};
+			break;
+
+		case 'count':
+
+			this.pacbData.count ++;
+			break;
+
+		case 'exe1':
+
+			var pacbData = this.pacbData;
+			if(pacbData.callback == null || pacbData.count == 0) return;
+			if(pacbData.index == pacbData.count -1){
+				pacbData.callback();
+			}else{
+				pacbData.index ++;
+			}
+			break;
+
+		case 'exe2':
+
+			var pacbData = this.pacbData;
+			if(pacbData.callback == null) return;
+			if(pacbData.count == 0){
+				pacbData.callback();
+			}
+			
+			break;
+		}
+	}
+	
 	
 	/**
 	 * AJAXによるアップロード
