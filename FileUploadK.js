@@ -1016,6 +1016,11 @@ class FileUploadK{
 	}
 	
 	
+	/**
+	 * ファイル名リストを取得
+	 * @param int fue_id ファイル要素のID属性値（省略可）
+	 * @return array ファイル名リスト
+	 */
 	getFileNames(fue_id){
 		
 		var fns = [];
@@ -1026,6 +1031,12 @@ class FileUploadK{
 					var fEnt = fileData[i];
 					fns.push(fEnt.fn);
 				}
+			}
+		}else{
+			var fileData = this.box[fue_id]['fileData'];
+			for(var i in fileData){
+				var fEnt = fileData[i];
+				fns.push(fEnt.fn);
 			}
 		}
 		return fns;
