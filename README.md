@@ -14,6 +14,6 @@ http://amaraimusi.sakura.ne.jp/FileUploadK/example.html
 
 ## info
 Author kenji uehara
-Date 2018-7-1 | 2018-8-7
-Version 1.0
+Date 2018-7-1 | 2018-8-11
+Version 1.1.1
 

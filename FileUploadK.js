@@ -55,7 +55,7 @@ class FileUploadK{
 		
 		this.param = this._setParamIfEmpty(param);
 		
-		this.unit = jQuery(param.unit_slt);
+		this.unit = jQuery(this.param.unit_slt);
 		
 		this.pacbData; // プレビュー後コールバック情報　
 		
@@ -67,9 +67,7 @@ class FileUploadK{
 	 */
 	_setParamIfEmpty(param){
 		
-		if(param == null){
-			throw new Error("Please set 'ajax_url' in 'param");
-		}
+		if(param == null) param = {};
 		
 		if(param['ajax_url'] == null) param['ajax_url'] = null;
 		
@@ -241,7 +239,6 @@ class FileUploadK{
 		
 		// バリデーション確認
 		fileData = this._validCheck(fue_id,fileData); 
-		
 		this.box[fue_id]['fileData'] = fileData;
 		
 		var preview_html = ''; // プレビューHTML
@@ -385,8 +382,19 @@ class FileUploadK{
 		var validData = this.box[fue_id]['validData']; // バリデーションデータ
 		var validExts = validData.validExts; // バリデーション拡張子リスト
 
+		// バリデーション実行フラグ
+		var valid_flg = true;
+		if(validExts == null || validExts == 0) valid_flg = false;
+
 		for(var i in fileData){
 			var fEnt = fileData[i];
+			
+			// バリデーション実行フラグがOFFならチェックをしない。
+			if(valid_flg == false){
+				fEnt['err_flg'] = false;
+				continue;
+			}
+			
 			var fn = fEnt.fn;
 			var ext = this._getExtension(fEnt.fn);// ファイル名から拡張子を取得する。
 			
@@ -934,7 +942,7 @@ class FileUploadK{
 				'validMimes':[],
 		}
 		
-		if (valid_ext == null || valid_ext == '') return valid;
+		if (valid_ext == null || valid_ext == '') return validData;
 		
 		var validExts = []; // バリデーション拡張子リスト
 		
@@ -1006,6 +1014,24 @@ class FileUploadK{
 		
 		return validMimes;
 	}
+	
+	
+	getFileNames(fue_id){
+		
+		var fns = [];
+		if(fue_id == null){
+			for(var fue_id in this.box){
+				var fileData = this.box[fue_id]['fileData'];
+				for(var i in fileData){
+					var fEnt = fileData[i];
+					fns.push(fEnt.fn);
+				}
+			}
+		}
+		return fns;
+	}
+	
+	
 	
 	/**
 	 * MIMEマッピングデータを取得
