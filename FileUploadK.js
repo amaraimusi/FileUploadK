@@ -9,14 +9,16 @@
  * 複数のファイルをアップロードできる。
  * 複数のファイルアップロード要素に対応。
  * 進捗バーの表示
+ * ファイルの初期表示
  * 
  * @license MIT
- * @version 1.1.1
- * @date 2018-7-6 | 2018-8-11
+ * @version 1.2.0
+ * @date 2018-7-6 | 2018-8-14
  * @history 
  *  - 2018-7-6 新規作成
  *  - 2018-8-7 リリース
  *  - 2018-8-11 ver 1.1
+ *  - 2018-8-14 ver 1.2.0 ファイルの初期表示
  * 
  */
 class FileUploadK{
@@ -57,7 +59,7 @@ class FileUploadK{
 		
 		this.unit = jQuery(this.param.unit_slt);
 		
-		this.pacbData; // プレビュー後コールバック情報　
+		this.cbAsynsEnd; // 複数非同期・全終了後コールバック・データ
 		
 	}
 
@@ -145,7 +147,7 @@ class FileUploadK{
 			// ボックスデータにアップロードファイル情報を追加
 			var files = evt.dataTransfer.files; 
 			this.box[fue_id]['files'] = files;
-			this._preview(fue_id,option); // プレビュー表示
+			this._preview(fue_id,'files',option); // プレビュー表示
 			
 		},false);
 		// ドラッグオーバーイベントを発動させないようにする。
@@ -161,7 +163,7 @@ class FileUploadK{
 			var files = e.target.files; // ファイルオブジェクト配列を取得（配列要素数は選択したファイル数を表す）
 			if(files == null || files.length == 0) return;// ファイル件数が0件なら処理抜け
 			this.box[fue_id]['files'] = files;
-			this._preview(fue_id,option); // プレビュー表示
+			this._preview(fue_id,'files',option); // プレビュー表示
 			
 		});
 		
@@ -170,6 +172,91 @@ class FileUploadK{
 		clearBtn.click((e) => {
 			this._clearBtnClick(e);
 		});
+	}
+	
+	
+	/**
+	 * file要素にファイルパスをセットする
+	 * @param string fue_id file要素のid
+	 * @param array fps ファイルパスリスト（ ファイル名一つを文字列指定可）
+	 * @param object option addEventのoptionと同じ
+	 */
+	setFilePaths(fue_id,fps,option){
+		
+		if(option == null) option = {};
+		
+		this._clearBtnAction(fue_id); // クリアボタンあｓ九品
+		
+		if(fps == null || fps == '' || fps == 0) return;
+		if(typeof fps == 'string') fps = [fps];
+		
+		var bData = [];
+		
+		// 複数非同期・全終了後コールバック・初期化
+		this._cbAsynsEndInit(fps.length,()=>{
+			//複数非同期・全終了後コールバック
+			
+			// プレビュー表示
+			this.box[fue_id]['bData'] = bData;
+			this._preview(fue_id,'blob',option);
+
+		});
+
+		// ファイルをXHRでプリロードする
+		for(var i in fps){
+			var fp = fps[i];
+			this._preloadByXhr(fp,bData);
+		}
+	}
+	
+	/**
+	 * XHRによってファイルをプリロードする Preloaded by XHR
+	 * @param string fp ファイルパス
+	 * @param array bData BLOB関連データ
+	 */
+	_preloadByXhr(fp,bData){
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', fp, true);
+		xhr.responseType = 'blob';
+		xhr.onload = (e) => {
+			
+			// プリロードのonloadイベント処理： ファイル関連情報をbDataにセットする。
+			this._xhrOnload(e,xhr,bData);
+
+		};
+		xhr.send();
+	}
+	
+	/**
+	 * プリロードのonloadイベント処理： ファイル関連情報をbDataにセットする。
+	 * @param object e onloadイベント
+	 * @param XMLHttpRequest xhr
+	 * @param array bData BLOB関連データ
+	 */
+	_xhrOnload(e,xhr,bData){
+		// Blobを取得する
+		var blob = e.target.response;
+		
+		var r_url = e.target.responseURL;
+		var fn = this._stringRightRev(r_url,'/');
+
+		var mime_type = xhr.getResponseHeader("Content-Type");
+		var size = xhr.getResponseHeader("Content-Length");
+		var server = xhr.getResponseHeader("server");
+		var modified = xhr.getResponseHeader("Last-Modified");
+		
+		var bEnt = {
+				'fn':fn,
+				'mime_type':mime_type,
+				'size':size,
+				'modified':modified,
+				'blob':blob
+		};
+		
+		bData.push(bEnt);
+
+		// 複数非同期・全終了後コールバック・アクション
+		this._cbAsynsEndAction('exe1');
 	}
 	
 	
@@ -216,11 +303,29 @@ class FileUploadK{
 	/**
 	 * プレビュー表示
 	 * @param string fue_id ファイルアップロード要素のid属性
+	 * @param bin_type 'files' or 'blob'
 	 * @param object option オプション（addEventメソッドの引数と同じ）
+	 *  -  BLOBフラグ ファイル初期表示から呼び出し時はtrue
 	 */
-	_preview(fue_id,option){
+	_preview(fue_id,bin_type,option){
 
-		var files = this.box[fue_id]['files'];
+		var files = null;
+		var bData = null;
+		var fileData = [];
+		if(bin_type == 'files'){
+
+			// filesからファイル名などのファイルデータを取得する
+			var files = this.box[fue_id]['files'];
+			fileData = this._getFileDataFromFiles(files);
+			
+		}else if(bin_type == 'blob'){
+			
+			// BLOBの関連データからファイルデータを取得する
+			bData = this.box[fue_id]['bData'];
+			fileData = this._getFileDataFromBData(bData);
+		}else{
+			throw new Error("Unknown 'bin_type'");
+		}
 		
 		// 親ラベル要素を内部要素に合わせてフィットさせるため幅をautoにする。
 		var parLbl = this._getElement(fue_id,'label');
@@ -233,9 +338,6 @@ class FileUploadK{
 		// クリアボタンを表示する
 		var clearBtnW = this._getElement(fue_id,'clear_btn_w');
 		clearBtnW.show();
-		
-		// filesからファイル名などのファイルデータを取得する
-		var fileData = this._getFileDataFromFiles(files);
 		
 		// バリデーション確認
 		fileData = this._validCheck(fue_id,fileData); 
@@ -252,10 +354,7 @@ class FileUploadK{
 		// プレビュー区分要素にプレビューHTMLをセットする。
 		var prvElm = this._getElement(fue_id,'preview');
 		if(prvElm[0]) prvElm.html(preview_html);
-		
-		
-		this._pacbAction('reset',option); // プレビュー後コールバックアクション：カウントリセット
-		
+
 		// リソースプレビュー要素を取得する。リソースプレビュー要素はプレビュー区分要素内に複数存在するDIV要素群のこと。
 		var rpElms = {}; // リソースプレビュー要素リスト
 		prvElm.children('div').each((i,elm)=>{
@@ -263,29 +362,76 @@ class FileUploadK{
 			var rpElm = elm.find('.fuk_rp');
 			if(rpElm[0]){
 				rpElms[i] = rpElm;
-				this._pacbAction('count'); // プレビュー後コールバックアクション：カウント処理
+				
 			}else{
 				rpElms[i] = null;
 			}
 		});
+		
+		// ファイルデータのフィルタリング：0サイズとバリデーションエラーのエンティティを取り除く。
+		fileData = this._filteringFileData(fileData,rpElms);
+		
+		if(bin_type == 'files'){
+		
+			// プレビュー後コールバックアクションの初期化
+			if(option['pacb'] == null) option['pacb'] = null;
+			this._cbAsynsEndInit(fileData.length,option['pacb']);
+		
+			// リソース（画像など）をリソースプレビュー要素に表示させる。（非同期処理あり）
+			for(var i in fileData){
 	
-		// リソース（画像など）をリソースプレビュー要素に表示させる。（非同期処理あり）
+				var fEnt = fileData[i];
+				var index = fEnt.index;
+				var file = files[index];
+				
+				// リソース（ファイル）のレンダリングを行い、リソースプレビュー要素に画像などを表示する。
+				this._setupRender(file,rpElms,index);
+	
+			}
+			
+			this._cbAsynsEndAction('exe2'); // プレビュー後コールバックアクション：制御と実行2
+		
+		}else if(bin_type == 'blob'){
+			
+			// リソース（画像など）をリソースプレビュー要素に表示させる。
+			for(var i in fileData){
+	
+				var fEnt = fileData[i];
+				var index = fEnt.index;
+				var blob = bData[index]['blob'];
+				var blob_url = window.URL.createObjectURL(blob);
+				var rpElm = rpElms[index];
+				rpElm.attr('src',blob_url);
+	
+			}
+			
+			this._cbAsynsEndAction('exe2'); // プレビュー後コールバックアクション：制御と実行2
+		}
+	}
+	
+	/**
+	 * ファイルデータのフィルタリング：0サイズとバリデーションエラーのエンティティを取り除く。
+	 * @param array fileData ファイルデータ
+	 * @param array rpElms リソースプレビュー要素リスト
+	 * @return array フィルタリング後のファイルデータ
+	 */
+	_filteringFileData(fileData,rpElms){
+		var fileData2 = [];
+		
 		for(var i in fileData){
 			if(rpElms[i]==null) continue;
 			var fEnt = fileData[i];
-			var file = files[i];
 
 			if(fEnt.err_flg == true) continue;
-			if(file.size == null) continue;
+			if(fEnt.size == null || fEnt.size == 0) continue;
 			
+			fEnt['index'] = i;
 			
-			// リソース（ファイル）のレンダリングを行い、リソースプレビュー要素に画像などを表示する。
-			this._setupRender(file,rpElms,i);
+			fileData2.push(fEnt);
 
 		}
 		
-		this._pacbAction('exe2'); // プレビュー後コールバックアクション：制御と実行2
-		
+		return fileData2;
 	}
 	
 	
@@ -305,7 +451,7 @@ class FileUploadK{
 			var rpElm = rpElms[i];
 			rpElm.attr('src',reader.result);
 			
-			this._pacbAction('exe1'); // プレビュー後コールバックアクション：制御と実行1
+			this._cbAsynsEndAction('exe1'); // プレビュー後コールバックアクション：制御と実行1
 		}
 	}
 	
@@ -360,6 +506,65 @@ class FileUploadK{
 			var modified = ''; 
 			if(file.lastModifiedDate != null){
 				modified = file.lastModifiedDate.toLocaleString();
+			}
+			fEnt['modified'] = modified;
+			
+			fileData.push(fEnt);
+
+		}
+		
+		return fileData;
+		
+	}
+	
+	
+	/**
+	 * bDataからファイル名などのファイルデータを取得する
+	 * 
+	 * @note
+	 * サイズ0のファイルデータは取得しない。
+	 * 
+	 * @param array アップロードファイルリスト
+	 * @return array ファイルデータ
+	 */
+	_getFileDataFromBData(bData){
+		
+		var fileData = []; // ファイルデータ
+		
+		for(var i in bData){
+			var bEnt = bData[i];
+			if(bEnt.size == null || bEnt == 0) continue;
+			var fEnt = {};
+			
+			// MIME
+			fEnt['mime'] = bEnt.mime_type;
+			
+			// MIMEからファイル種別を判別する。
+			var file_type = '';
+			if(fEnt.mime != null){
+				if(fEnt.mime.indexOf('image') >= 0) file_type = 'image';
+				if(fEnt.mime.indexOf('audio') >= 0) file_type = 'audio';
+			}
+			fEnt['file_type'] = file_type;
+			
+			// ファイル名
+			fEnt['fn'] = bEnt.fn;
+			
+			// サイズ
+			fEnt['size'] = bEnt.size;
+			
+			// 単位表示付きサイズ
+			var size_str = 0; // サイズ（ファイル容量）
+			if(bEnt.size != null) size_str = bEnt.size;
+			if(!isNaN(size_str)){
+				size_str = this._convSizeUnit(size_str); // 単位付き表示に変換
+			}
+			fEnt['size_str'] = size_str;
+			
+			// 更新日
+			var modified = ''; 
+			if(bEnt.modified != null){
+				modified = new Date(modified).toLocaleString();
 			}
 			fEnt['modified'] = modified;
 			
@@ -562,6 +767,15 @@ class FileUploadK{
 		var clickBtn = jQuery(e.currentTarget);
 		var fue_id = clickBtn.attr('data-fue-id');
 
+		this._clearBtnAction(fue_id);
+		
+	}
+	
+	/**
+	 * クリアボタンアクション
+	 * @param string fue_id file要素のid属性
+	 */
+	_clearBtnAction(fue_id){
 		// クリアボタンラッパー要素を隠す
 		var clearBtnW = this._getElement(fue_id,'clear_btn_w');
 		clearBtnW.hide();
@@ -584,59 +798,51 @@ class FileUploadK{
 		var parLabel = this._getElement(fue_id,'label');
 		parLabel.width(label_width);
 		parLabel.height(label_height);
+	}
+	
+	/**
+	 * 複数非同期・全終了後コールバック・初期化
+	 * @param int count 非同期処理の件数
+	 * @param function callback プレビュー後コールバック
+	 */
+	_cbAsynsEndInit(count,callback){
+
+		this.cbAsynsEndData = {
+			'index':0,
+			'count':count,
+			'callback':callback,
+		};
 		
 	}
 	
 	/**
-	 * プレビュー後コールバックアクション
+	 * 複数非同期・全終了後コールバック
 	 * @note
-	 * プレビュー後にコールバック関数を実行する。
-	 * しかし、「プレビュー後」のタイミングは複数の非同期処理が関わってくるため非常に複雑である。
-	 * 当関数でなるべくシンプルな処理になるようにしている。
+	 * 複数の非同期処理がすべて終了したらコールバックを実行する。
 	 * 
 	 * @param string action アクションコード
-	 *  - reset コールバックに関する情報を初期化する。
-	 *  - count 非同期処理の実行回数をカウントする。
 	 *  - exe1 非同期処理がすべて終了したらコールバック関数を実行する。
 	 *  - exe2 非同期処理が0件であるならコールバック関数を実行する。
 	 */
-	_pacbAction(action,option){
-
+	_cbAsynsEndAction(action){
 		switch (action) {
-		case 'reset':
-
-			var pacb = null;
-			if(option && option['pacb']) pacb = option['pacb'];
-
-			this.pacbData = {
-				'index':0,
-				'count':0,
-				'callback':pacb,
-			};
-			break;
-
-		case 'count':
-
-			this.pacbData.count ++;
-			break;
-
 		case 'exe1':
 
-			var pacbData = this.pacbData;
-			if(pacbData.callback == null || pacbData.count == 0) return;
-			if(pacbData.index == pacbData.count -1){
-				pacbData.callback();
+			var cbAsynsEndData = this.cbAsynsEndData;
+			if(cbAsynsEndData.callback == null || cbAsynsEndData.count == 0) return;
+			if(cbAsynsEndData.index == cbAsynsEndData.count -1){
+				cbAsynsEndData.callback();
 			}else{
-				pacbData.index ++;
+				cbAsynsEndData.index ++;
 			}
 			break;
 
 		case 'exe2':
 
-			var pacbData = this.pacbData;
-			if(pacbData.callback == null) return;
-			if(pacbData.count == 0){
-				pacbData.callback();
+			var cbAsynsEndData = this.cbAsynsEndData;
+			if(cbAsynsEndData.callback == null) return;
+			if(cbAsynsEndData.count == 0){
+				cbAsynsEndData.callback();
 			}
 			
 			break;
@@ -1150,6 +1356,22 @@ class FileUploadK{
 		}else{
 			return data;
 		}
+	}
+	
+	/**
+	 * 文字列を右側から印文字を検索し、右側の文字を切り出す。
+	 * @param s 対象文字列
+	 * @param mark 印文字
+	 * @return 印文字から右側の文字列
+	 */
+	_stringRightRev(s,mark){
+		if (s==null || s==""){
+			return s;
+		}
+		
+		var a=s.lastIndexOf(mark);
+		var s2=s.substring(a+mark.length,s.length);
+		return s2;
 	}
 	
 
