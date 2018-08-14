@@ -185,7 +185,7 @@ class FileUploadK{
 		
 		if(option == null) option = {};
 		
-		this._clearBtnAction(fue_id); // クリアボタンあｓ九品
+		this._clearBtnAction(fue_id); // クリアボタンアクション
 		
 		if(fps == null || fps == '' || fps == 0) return;
 		if(typeof fps == 'string') fps = [fps];
