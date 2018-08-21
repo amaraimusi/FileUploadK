@@ -864,17 +864,43 @@ class FileUploadK{
 		var fd = new FormData();
 		
 		var index = 0;
-		for(var fu_id in this.box){
-			var files = this.box[fu_id]['files'];
-			var fileData = this.box[fu_id]['fileData'];
+//		for(var fue_id in this.box){
+//			var files = this.box[fue_id]['files'];
+//			var fileData = this.box[fue_id]['fileData'];
+//			for(var i in fileData){
+//				var fEnt = fileData[i];
+//				if(fEnt.err_flg == false){
+//					fd.append(index, files[i]);
+//					index ++;
+//				}
+//			}
+//		}
+		
+		console.log('test=Ａ5');//■■■□□□■■■□□□■■■□□□)
+		for(var fue_id in this.box){
+			var files = this.box[fue_id]['files'];
+			var fileData = this.box[fue_id]['fileData'];
+			
 			for(var i in fileData){
 				var fEnt = fileData[i];
 				if(fEnt.err_flg == false){
-					fd.append(index, files[i]);
+					var f_key = fue_id + '[' + i + ']';
+					fd.append(f_key, files[i]);
 					index ++;
 				}
 			}
 		}
+		
+//		for(var fue_id in this.box){
+//			var files = this.box[fue_id]['files'];
+//			for(var i in fileData){
+//				
+//			}
+//			fd.append(fue_id,files);
+//
+//		}
+		
+		
 
 		// ファイル情報と一緒に送信するデータをセットする
 		withData = this._escapeForAjax(withData); // Ajax送信データ用エスケープ

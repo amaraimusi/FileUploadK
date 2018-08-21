@@ -1,11 +1,17 @@
 <?php
 
+
 $fileNames = [];
-foreach($_FILES as $key=> $file){
-	if($_SERVER['SERVER_NAME']=='localhost'){
-		move_uploaded_file($file["tmp_name"], 'upload_files/'.$file["name"]);
+foreach($_FILES as $fue_id=> $files){
+	
+	foreach($files['name'] as $i => $fn){
+		$tmp_name = $files["tmp_name"][$i];
+		if($_SERVER['SERVER_NAME']=='localhost'){
+			move_uploaded_file($tmp_name, 'upload_files/' . $fn);
+		}
+		$fileNames[] = $fn;
 	}
-	$fileNames[] = $file["name"];
+	
 }
 
 $ent_json_str = $_POST['key1'];
