@@ -7,6 +7,7 @@ if($_SERVER['SERVER_NAME']=='localhost'){
 	$option = array(
 			'dpDatas' => array(
 					'file1' => array(
+						'fn' => array('buta.jpg','yagi.jpg'),
 						'orig_dp' => '/FileUploadK/upload_files/file1/orig',
 						'thums'	=> array(
 								array(
@@ -22,6 +23,7 @@ if($_SERVER['SERVER_NAME']=='localhost'){
 						),
 					),
 					'file3' => array(
+							'fn' => 'tanuki.txt',
 							'orig_dp' => '/FileUploadK/upload_files/file3/orig/',
 							'thums'	=> array(
 									array(

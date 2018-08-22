@@ -9,9 +9,11 @@ require_once 'ThumbnailEx.php';
  * 「<input type = 'file'>」であるファイルアップロードのフォーム要素から送られてきたファイルデータを指定場所に保存する。
  * ファイルチェックや、画像形式ならサムネイル画像作成も行う。
  * 
- * @date 2018-6-30
- * @version 1.0
+ * @date 2018-6-30 | 2018-8-23
+ * @version 1.1
  * @history
+ * 2018-8-23 ver1.1 optionにfn(ファイル名)を指定できるようにした。
+ * 2018-8-22 ver1.0 リリース
  * 2018-6-30 開発開始
  */
 class FileUploadK{
@@ -43,6 +45,10 @@ class FileUploadK{
 	 * 
 	 * - dpDatas ファイル保管ディレクトリ情報
 	 * - 	fue_id file要素id
+	 * - 		fn ファイル名（省略時は$_FILES内のファイル名）
+	 * - 			省略:$_FILES内のファイル名がセットされる。
+	 * - 			ファイル名文字列：複数アップロードのときは、最初の1件に「ファイル名文字列」をセットする。
+	 * - 			ファイル名配列：複数アップロードのとき、それぞれの配列要素をセットする。
 	 * - 		orig_dp オリジナルパス（ファイル保管ディレクトリ）
 	 * - 		thums[i] サムネイル情報（画像ファイルのみの設定）
 	 * - 			thum_dp　サムネイル保管ディレクトリパス
@@ -68,7 +74,7 @@ class FileUploadK{
 	public function workAllAtOnce($FILES,$option = array()){
 		
 		// ファイルデータを取得する
-		$fileData = $this->getFileData($FILES);
+		$fileData = $this->getFileData($FILES,$option);
 		
 		// バリデーション情報を取得する
 		$valids = $this->getValids($option);
@@ -100,19 +106,23 @@ class FileUploadK{
 	/**
 	 * ファイルデータを取得する[
 	 * @param array $FILES $_FILESのこと
+	 * @param array $option workAllAtOnceメソッドと同じ$option
 	 * @return array ファイルデータ
 	 */
-	private function getFileData($FILES){
+	private function getFileData(&$FILES,&$option){
 		
 		$fileData = array(); // ファイルデータ
 		
 		$imgMap = array('png','jpg','jpeg','gif'); // サムネイル対応している画像拡張子
+		
+		$fnData = $this->makeFnData($FILES,$option); // ファイル名データを作成
 		
 		// $_FILESからファイルデータを作成する。
 		foreach($FILES as $fue_id => $files){
 			
 			foreach($files['name'] as $i => $fn){
 				
+				$fn = $fnData[$fue_id][$i];
 				$ext = $this->stringRightRev($fn,'.'); // 拡張子
 				$mime = $files['type'][$i]; // MIME
 				$size = $files['size'][$i]; // 容量サイズ
@@ -140,6 +150,66 @@ class FileUploadK{
 		return $fileData;
 	}
 	
+	
+	
+	/**
+	 * ファイル名データを作成
+	 * @param array $FILES $_FILESのこと
+	 * @param array $option workAllAtOnceメソッドと同じ$option
+	 * @return array ファイル名データ 
+	 */
+	private function makeFnData(&$FILES,&$option){
+		
+		$fnData = array(); // ファイル名データ
+		
+		// オプションに設定がなければ空フラグをセットする。
+		$opt_empty_flg = false; // オプション空フラグ
+		if(empty($option)) $opt_empty_flg = true;
+		if(empty($option['dpDatas'])) $opt_empty_flg = true;
+		
+		// ファイル保管ディレクトリ情報を取得する
+		$dpDatas = array(); // ファイル保管ディレクトリ情報
+		if($opt_empty_flg == false) $dpDatas = $option['dpDatas'];
+		
+		// ファイル名データの作成
+		foreach($FILES as $fue_id => $files){
+			
+			// オプションに設定がなければ空フラグをセットする。その２
+			if(empty($dpDatas[$fue_id])) $opt_empty_flg = true;
+			if(empty($dpDatas[$fue_id]['fn'])) $opt_empty_flg = true;
+			
+			// オプションファイル名リストを取得
+			$optFns = array(); // オプションファイル名リスト
+			if($opt_empty_flg == false){
+				$opt_fn = $dpDatas[$fue_id]['fn'];
+				if(is_string($opt_fn)){
+					$optFns = array($opt_fn);
+				}else{
+					$optFns = $opt_fn;
+				}
+			}
+			
+			foreach($files['name'] as $i => $fn){
+
+				// オプションにファイル名がセットされていないなら、$_FILES内のファイル名をセットする。
+				if($opt_empty_flg){
+					$fnData[$fue_id][$i] = $fn;
+					continue;
+				}
+				
+				// オプションのファイル名をファイル名データにセットする。
+				if(empty($optFns[$i])){
+					$fnData[$fue_id][$i] = $fn;
+				}else{
+					$fnData[$fue_id][$i] = $optFns[$i];
+				}
+
+			}
+		}
+		
+		return $fnData;
+	}
+
 	
 	/**
 	 * バリデーション情報を取得する
