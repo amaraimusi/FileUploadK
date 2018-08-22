@@ -243,7 +243,7 @@ class FileUploadK{
 	 * 
 	 * @param $ary (string or array)
 	 * @param キー
-	 * @return 配列
+	 * @return array 配列
 	 */
 	private function str2aryInAry($ary,$key){
 		
@@ -265,7 +265,7 @@ class FileUploadK{
 	 * バリデーションを行う
 	 * @param array $fileData ファイルデータ
 	 * @param array $valids バリデーション情報
-	 * @return エラー情報をセットしたファイルデータ
+	 * @return array エラー情報をセットしたファイルデータ
 	 */
 	private function validation(&$fileData,&$valids){
 		
@@ -397,8 +397,8 @@ class FileUploadK{
 	
 	/**
 	 * ディレクトリパスデータを取得する
-	 * @param $fileData ファイルデータ
-	 * @param $option オプション
+	 * @param array $fileData ファイルデータ
+	 * @param array $option オプション
 	 *  - dpDatas ファイル保管ディレクトリ情報
 	 */
 	private function getDirPathData(&$fileData,&$option){
