@@ -15,10 +15,12 @@ http://amaraimusi.sakura.ne.jp/FileUploadK/
 
 ## info
 Author kenji uehara
-Date 2018-7-1 | 2018-8-27
-Version 1.2.2
+Date 2018-7-1 | 2018-9-18
+Version 1.2.3
 
 ## history
+- 2018-9-18 var 1.2.3 クリアのバグを修正
+- 2018-8-27 ver 1.2.2 setFilePaths:ファイル名空に対応
 - 2018-8-14 ver 1.2.0 ファイルの初期表示
 - 2018-8-11 ver 1.1
 - 2018-8-7 ver1.0 リリース
