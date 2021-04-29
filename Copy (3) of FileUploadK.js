@@ -213,7 +213,12 @@ class FileUploadK{
 		
 		if(fps == null || fps == '' || fps == 0) return;
 		if(typeof fps == 'string') fps = [fps];
-
+		
+		/*■■■□□□■■■□□□
+		var fukMsg = this._getElement(fue_id,'fuk_msg');
+		this.orig_fuk_msg = fukMsg.text();
+		*/
+		
 		var bData = [];
 		option['pacb'] = () => {
 			//複数非同期・全終了後コールバック
@@ -310,6 +315,15 @@ class FileUploadK{
 			</div>
 		`;
 		
+		/*
+		// プレビュー要素を追加■■■□□□■■■□□□
+		html += "<span class='fuk_preview' style='display:inline-block'></span>";
+		
+		
+		html += "<div class='fuk_clear_btn_w'><input type='button' value='Clear' class='btn btn-secondary btn-sm fuk_clear_btn' " +
+				"data-fue-id='" + fue_id + "' /></div>";*/
+				
+		
 		parLabel.append(html);
 		
 	}
@@ -337,6 +351,9 @@ class FileUploadK{
 	 *  -  BLOBフラグ ファイル初期表示から呼び出し時はtrue
 	 */
 	_preview(fue_id,bin_type,option){
+
+		//var fukMsg = this._getElement(fue_id,'fuk_msg');■■■□□□■■■□□□
+
 
 		this.active_fue_id = fue_id;
 		
@@ -768,7 +785,7 @@ class FileUploadK{
 		];
 		
 		let params_html = '';
-
+		//p_unit_html += "<div class='xxx'>";■■■□□□■■■□□□
 		// パラメータ区分のHTMLを組み立てる
 		for(var i in paramData){
 			var pEnt = paramData[i];
@@ -778,8 +795,12 @@ class FileUploadK{
 					<div><label class='fuk_param_label'>${pEnt.label}</label>
 					<val class='fuk_param_val'>${pEnt.val}</val></div>
 				`;
-
+			
+			//	"<div><label class='fuk_param_label'>" + pEnt.label + "</label>" + ■■■□□□■■■□□□
+			//	"<val class='fuk_param_val'>" + pEnt.val + "</val></div>";
 		}
+		
+		//p_unit_html += '</div>'; ■■■□□□■■■□□□
 
 		p_unit_html = `
 			<div class='fuk_file_unit' >
@@ -858,11 +879,23 @@ class FileUploadK{
 
 		// 初期メッセージ要素を再表示する。
 		var fukMsg = this._getElement(fue_id,'fuk_msg');
+		//fukMsg.html(this.orig_fuk_msg);■■■□□□■■■□□□
 		fukMsg.show();
 		
 		// プレビュー要素を取得し、中身をクリアする。
 		var preview = this._getElement(fue_id,'preview');
 		preview.html('');
+
+		// 親ラベルの幅をautoから初期サイズに戻す
+		/*■■■□□□■■■□□□2021-4-29
+		var label_width = this.box[fue_id]['label_width']
+		var label_height = this.box[fue_id]['label_height']
+		var parLabel = this._getElement(fue_id,'label');
+		var display = parLabel.css('display');
+		if(display == 'block'){
+			parLabel.width(label_width);
+			parLabel.height(label_height);
+		}*/
 
 		var parLbl = this._getElement(fue_id,'label');
 		parLbl.css({'width':'100%','height':'100%'});
@@ -1178,6 +1211,22 @@ class FileUploadK{
 		var parLebel = this._getElement(fue_id,'label'); // 親ラベル要素
 		bEnt['label_width'] = parLebel.width(); 
 		bEnt['label_height'] = parLebel.height(); 
+		
+		/*■■■□□□■■■□□□
+		// paramの初期メッセージテキストをセット。空ならFU要素のtitle属性をセット
+		if(this.param.fuk_msg_text){
+			fuk_msg_text = this.param.fuk_msg_text;
+		}else{
+			var fue = this._getElement(fue_id,'fue'); // FU要素
+			var fe_title = fue.attr('title');
+			if(fe_title){
+				fuk_msg_text = fe_title;
+			}else{
+				fuk_msg_text = 'File Upload';
+			}
+		}
+		bEnt['fuk_msg_text'] = fuk_msg_text;
+		*/
 		
 		// バリデーション情報をセットする
 		if(option['valid_ext'] == null){

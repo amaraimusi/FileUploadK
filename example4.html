@@ -8,11 +8,11 @@
 	<title>FileUploadK.js | ワクガンス</title>
 	<link rel='shortcut icon' href='/home/images/favicon.ico' />
 	
-	<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+	<link href="bootstrap.min.css" rel="stylesheet">
 	<link href="example/example.css" rel="stylesheet">
 
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
-	<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<script src="jquery.min.js"></script>
+	<script src="bootstrap.min.js"></script>
 	
 	<link href="FileUploadK.css" rel="stylesheet">
 	<script src="FileUploadK.js"></script>
@@ -28,16 +28,23 @@
 <div class="container">
 
 <h2>デモ</h2>
-<label for="file1" class="fuk_label" style="width:240px;height:160px;float:left">
-	<input type="file" id="file1" multiple style="display:none" accept="image/*" title="画像ファイルをドラッグ＆ドロップ(複数可)" />
-</label>
-<label for="file2" class="fuk_label" style="width:160px;height:120px;background-color:#efaca7;float:left;">
-	<input type="file" id="file2" multiple style="display:none"  title="audio系のアップロード"/>
-</label>
-<label for="file3" class="fuk_label" style="width:160px;height:120px;background-color:#56cf8c;float:left;">
-	<input type="file" id="file3" multiple style="display:none" title="txtファイルのアップロード"/>
-</label>
-<div style="clear:both"></div>
+<div>
+	<div style="width:240px;height:160px;float:left">
+		<label for="file1" class="fuk_label" >
+			<input type="file" id="file1" multiple style="display:none" accept="image/*" title="画像ファイルをドラッグ＆ドロップ(複数可)" />
+		</label>
+	</div>
+	<div style="width:160px;height:120px;background-color:#efaca7;float:left;">
+		<label for="file2" class="fuk_label" >
+			<input type="file" id="file2" multiple style="display:none"  title="audio系のアップロード"/>
+		</label>
+	</div>
+	<div style="width:160px;height:120px;background-color:#56cf8c;float:left;">
+		<label for="file3" class="fuk_label" >
+			<input type="file" id="file3" multiple style="display:none" title="txtファイルのアップロード"/>
+		</label>
+	</div>
+</div>
 <hr>
 <input type="button" value="送信" class="btn btn-success" onclick="ajaxReg();" />
 
