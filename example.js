@@ -23,8 +23,13 @@ function callback1(res){
 }
 
 function callback3(res){
-	console.log('callback1');
+	console.log('callback3');
 	jQuery("#res1").append('コールバックテスト3');
+}
+
+function callback4(res){
+	console.log('callback4');
+	jQuery("#res1").append('コールバックテスト4');
 }
 
 function ajaxReg(){

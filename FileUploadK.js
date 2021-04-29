@@ -283,7 +283,6 @@ class FileUploadK{
 				'blob':blob
 		};
 		
-		
 		bData.push(bEnt);
 
 		// 複数非同期・全終了後コールバック・アクション
@@ -344,13 +343,11 @@ class FileUploadK{
 		var bData = null;
 		var fileData = [];
 		if(bin_type == 'files'){
-
 			// filesからファイル名などのファイルデータを取得する
 			var files = this.box[fue_id]['files'];
 			fileData = this._getFileDataFromFiles(files);
 			
 		}else if(bin_type == 'blob'){
-			
 			// BLOBの関連データからファイルデータを取得する
 			bData = this.box[fue_id]['bData'];
 			fileData = this._getFileDataFromBData(bData);
@@ -403,7 +400,6 @@ class FileUploadK{
 		fileData = this._filteringFileData(fileData,rpElms);
 		
 		if(bin_type == 'files'){
-		
 			// プレビュー後コールバックアクションの初期化
 			this._cbAsynsEndInit(fileData.length,option);
 		
@@ -422,10 +418,8 @@ class FileUploadK{
 			this._cbAsynsEndAction('exe2'); // プレビュー後コールバックアクション：制御と実行2
 		
 		}else if(bin_type == 'blob'){
-
 			// リソース（画像など）をリソースプレビュー要素に表示させる。
 			for(var i in fileData){
-	
 				var fEnt = fileData[i];
 				var index = fEnt.index;
 				var blob = bData[index]['blob'];
@@ -531,6 +525,7 @@ class FileUploadK{
 			if(mime != null){
 				if(mime.indexOf('image') >= 0) file_type = 'image';
 				if(mime.indexOf('audio') >= 0) file_type = 'audio';
+				//if(mime.indexOf('video') >= 0) file_type = 'video';
 			}
 			fEnt['file_type'] = file_type;
 			
@@ -592,6 +587,7 @@ class FileUploadK{
 			if(fEnt.mime != null){
 				if(fEnt.mime.indexOf('image') >= 0) file_type = 'image';
 				if(fEnt.mime.indexOf('audio') >= 0) file_type = 'audio';
+				//if(fEnt.mime.indexOf('video') >= 0) file_type = 'video';
 			}
 			fEnt['file_type'] = file_type;
 			
@@ -743,20 +739,14 @@ class FileUploadK{
 			p_unit_html = "<div class='fuk_file_unit' >" + p_unit_html + '</div>';
 			return p_unit_html;
 		}
-		
-		// プレビュー画像サイズを取得
-		var imgSize = this._getImgSize(fue_id,option);
-		var label_width = imgSize.width;
-		var label_height = imgSize.height;
-		
+
 		// 画像要素と音楽要素の作成
 		if(fEnt.file_type == 'image'){
-			//p_unit_html += "<img src='' class='fuk_rp' style='width:" + label_width + "px;height:" + label_height + "px;' />";
 			p_unit_html += "<img src='' class='fuk_rp' style='width:100%;height:100%' />";
 		}else if(fEnt.file_type == 'audio'){
 			p_unit_html += "<audio src='' class='fuk_rp' controls />";
 		}
-		
+
 		var adf = this.param.adf;// 付属データフラグリスト
 	
 		// 通常パラメータの表示
@@ -1251,6 +1241,10 @@ class FileUploadK{
 		
 		else if(valid_ext == 'audio'){
 			validExts = ['mp3','wav'];
+		}
+		
+		else if(valid_ext == 'video'){
+			validExts = ['mp4','avi','mov','webm'];
 		}
 		
 		// バリデーション拡張子が文字列型である場合
