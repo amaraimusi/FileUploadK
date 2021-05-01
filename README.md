@@ -9,6 +9,10 @@
 - 進捗バーの表示
 - ファイルの初期表示
 
+## 注意
+Vue.jsと併用する場合に注意が必要。
+Vueのappへパラメータをいろいろセット後、当プログラムの処理を行うこと。
+vue.jsはファイルアップロードの各種イベントを上書きで書き換えてしまうようだ。
 
 ## example
 http://amaraimusi.sakura.ne.jp/FileUploadK/
